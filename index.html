@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pariz Mapa sa Imenima Četvrti</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      body {
+        display: flex;
+        flex-direction: row;
+      }
+      svg {
+        width: 800px;
+        height: 600px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        font-family: sans-serif;
+      }
+
+      path {
+        fill: #cce5ff;
+        stroke: #333;
+        stroke-width: 0.5px;
+      }
+
+      text {
+        font-size: 10px;
+        fill: #333;
+        pointer-events: none;
+        text-anchor: middle;
+      }
+
+      .tooltip {
+        position: absolute;
+        background-color: white;
+        padding: 4px 8px;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .details {
+        margin-left: 30px;
+        width: 250px;
+        height: 400px;
+        background-color: white;
+        border: 1px solid #aaa;
+        padding: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        display: none;
+        font-size: 14px;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="tooltip" class="tooltip"></div>
+    <svg id="map"></svg>
+    <script>
+      function openDetails(content) {
+        d3.select("#details-body").html(content);
+        d3.select("#details").style("display", "block");
+      }
+      function closeDetais() {
+        d3.select("#details").style("display", "none");
+      }
+      function manageWeekends() {
+        const flag = document.getElementById("weekendsCheckbox");
+        if (flag.checked) {
+          d3.selectAll(".circle-weekends").style("display", "block");
+        } else {
+          d3.selectAll(".circle-weekends").style("display", "none");
+        }
+      }
+
+      function manageWeekdays() {
+        const flag = document.getElementById("weekdaysCheckbox");
+        if (flag.checked) {
+          d3.selectAll(".circle-weekdays").style("display", "block");
+        } else {
+          d3.selectAll(".circle-weekdays").style("display", "none");
+        }
+      }
+
+      const width = 800;
+      const height = 600;
+
+      const svg = d3.select("#map");
+      const g = svg.append("g");
+      const gWeekends = svg.append("g").attr("class", "weekends");
+      const gWeekdays = svg.append("g").attr("class", "weekdays");
+
+      const tooltip = d3.select("#tooltip");
+
+      const projection = d3
+        .geoMercator()
+        .center([2.35, 48.86])
+        .scale(150000)
+        .translate([width / 2, height / 2]);
+
+      const path = d3.geoPath().projection(projection);
+
+      const zoom = d3
+        .zoom()
+        .scaleExtent([1, 20])
+        .on("zoom", (event) => {
+          g.attr("transform", event.transform);
+        });
+
+      svg.call(zoom);
+
+      d3.json("paris.json").then((geojson) => {
+        g.selectAll("path")
+          .data(geojson.features)
+          .enter()
+          .append("path")
+          .attr("d", path);
+
+        g.selectAll("text")
+          .data(geojson.features)
+          .enter()
+          .append("text")
+          .attr("transform", (d) => {
+            const centroid = path.centroid(d);
+            return `translate(${centroid})`;
+          })
+          .text((d) => d.properties.name?.toLowerCase() || "")
+          .style("font-size", "7px");
+      });
+
+      d3.csv("paris_weekends.csv").then((data) => {
+        g.selectAll("gWeekends")
+          .data(data)
+          .enter()
+          .append("circle")
+          .attr("class", "circle-weekends")
+          .attr("cx", (d) => projection([+d.lng, +d.lat])[0])
+          .attr("cy", (d) => projection([+d.lng, +d.lat])[1])
+          .attr("r", 1.5)
+          .attr("fill", "purple")
+          .attr("opacity", 0.6)
+          .style("cursor", "pointer")
+          .style("display", "none")
+          .on("mouseover", (event, d) => {
+            tooltip
+              .style("opacity", 1)
+              .html(`Cijena: €${parseFloat(d.realSum).toFixed(2)}`);
+          })
+          .on("mousemove", (event) => {
+            tooltip
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 20 + "px");
+          })
+          .on("mouseout", () => {
+            tooltip.style("opacity", 0);
+          })
+          .on("click", (event, d) => {
+            const content = `
+			<strong>Cijena:</strong> €${parseFloat(d.realSum).toFixed(2)}<br>
+			<strong>Tip:</strong> ${d.room_type}<br>
+			<strong>Kapacitet:</strong> ${parseInt(d.person_capacity)}<br>
+			<strong>Superhost:</strong> ${d.host_is_superhost}<br>
+			<strong>Ocjena gostiju:</strong> ${d.guest_satisfaction_overall}<br>
+			<strong>Posjeduje privatnu sobu:</strong> ${
+        d.room_private === "True" ? "Da" : "Ne"
+      }<br>
+		`;
+            openDetails(content);
+          });
+      });
+      d3.csv("paris_weekdays.csv").then((data) => {
+        g.selectAll("weekDays")
+          .data(data)
+          .enter()
+          .append("circle")
+          .attr("class", "circle-weekdays")
+          .attr("cx", (d) => projection([+d.lng, +d.lat])[0])
+          .attr("cy", (d) => projection([+d.lng, +d.lat])[1])
+          .attr("r", 1.5)
+          .attr("fill", "orange")
+          .attr("opacity", 0.6)
+          .style("cursor", "pointer")
+          .style("display", "none")
+          .on("mouseover", (event, d) => {
+            tooltip
+              .style("opacity", 1)
+              .html(`Cijena: €${parseFloat(d.realSum).toFixed(2)}`);
+          })
+          .on("mousemove", (event) => {
+            tooltip
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 20 + "px");
+          })
+          .on("mouseout", () => {
+            tooltip.style("opacity", 0);
+          })
+          .on("click", (event, d) => {
+            const content = `
+			<strong>Cijena:</strong> €${parseFloat(d.realSum).toFixed(2)}<br>
+			<strong>Tip:</strong> ${d.room_type}<br>
+			<strong>Kapacitet:</strong> ${parseInt(d.person_capacity)}<br>
+			<strong>Superhost:</strong> ${d.host_is_superhost}<br>
+			<strong>Ocjena gostiju:</strong> ${d.guest_satisfaction_overall}<br>
+			<strong>Posjeduje privatnu sobu:</strong> ${
+        d.room_private === "True" ? "Da" : "Ne"
+      }<br>
+		`;
+            openDetails(content);
+          });
+      });
+      d3.csv("hospital.csv").then((data) => {
+        const hospitals = g
+          .selectAll("g.hospital")
+          .data(data)
+          .enter()
+          .append("g")
+          .attr("class", "hospital")
+          .attr("transform", (d) => {
+            const [x, y] = projection([+d.longitude, +d.latitude]);
+            return `translate(${x},${y})`;
+          })
+          .on("mouseover", (event, d) => {
+            tooltip
+              .style("opacity", 1)
+              .html(`<strong>${d.name}</strong><br>${d.address}`);
+          })
+          .on("mousemove", (event) => {
+            tooltip
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 20 + "px");
+          })
+          .on("mouseout", () => {
+            tooltip.style("opacity", 0);
+          });
+        hospitals
+          .append("line")
+          .attr("x1", -5)
+          .attr("y1", 0)
+          .attr("x2", 5)
+          .attr("y2", 0)
+          .attr("stroke", "red")
+          .attr("stroke-width", 2)
+          .attr("opacity", 0.6);
+
+        hospitals
+          .append("line")
+          .attr("x1", 0)
+          .attr("y1", -5)
+          .attr("x2", 0)
+          .attr("y2", 5)
+          .attr("stroke", "red")
+          .attr("stroke-width", 2)
+          .attr("opacity", 0.6);
+      });
+      d3.csv("police.csv").then((data) => {
+        const policeStations = g
+          .selectAll("g.police")
+          .data(data)
+          .enter()
+          .append("g")
+          .attr("class", "police")
+          .attr("transform", (d) => {
+            const [x, y] = projection([+d.longitude, +d.latitude]);
+            return `translate(${x},${y})`;
+          })
+          .on("mouseover", (event, d) => {
+            tooltip
+              .style("opacity", 1)
+              .html(`<strong>${d.name}</strong><br>${d.address}`);
+          })
+          .on("mousemove", (event) => {
+            tooltip
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 20 + "px");
+          })
+          .on("mouseout", () => {
+            tooltip.style("opacity", 0);
+          });
+
+        policeStations
+          .append("rect")
+          .attr("x", -5)
+          .attr("y", -5)
+          .attr("width", 5)
+          .attr("height", 5)
+          .attr("fill", "blue")
+          .attr("opacity", 0.6)
+          .attr("stroke", "black")
+          .attr("stroke-width", 1);
+      });
+    </script>
+    <div>
+      <div id="details" class="details">
+        <button onclick="closeDetais()" class="close-btn">×</button>
+        <h3>Detalji stana</h3>
+        <div id="details-body">Odaberi stan za prikaz informacija.</div>
+      </div>
+      <div id="filters" class="filters">
+        <input
+          type="checkbox"
+          id="weekendsCheckbox"
+          name="weekendsCheckbox"
+          value="weekendFlag"
+          onclick="manageWeekends()"
+        />
+        <label for="weekendsCheckbox">Weekends</label>
+        <input
+          type="checkbox"
+          id="weekdaysCheckbox"
+          name="weekdaysCheckbox"
+          value="weekdayFlag"
+          onclick="manageWeekdays()"
+        />
+        <label for="weekdaysCheckbox">Weekdays</label>
+      </div>
+    </div>
+  </body>
+</html>
