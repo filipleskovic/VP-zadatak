@@ -68,89 +68,89 @@ const gWeekdays = svg.append("g").attr("class", "weekdays");
 
 
 function drawPriceChart(data, selectedApartment) {
-d3.select("#price-chart-container").remove();
+    d3.select("#price-chart-container").remove();
 
-const container = d3.select("#graph-body")
-.append("div")
-.attr("id", "price-chart-container")
-.style("margin-bottom", "40px");
+    const container = d3.select("#graph-body")
+        .append("div")
+        .attr("id", "price-chart-container")
+        .style("margin-bottom", "40px");
 
-container.append("h4").text("Cijene u odnosu na ostale:");
+    container.append("h4").text("Cijene u odnosu na ostale:");
 
-const svg = container.append("svg")
-.attr("id", "priceChart")
-.attr("width", CHART_WIDTH)
-.attr("height", CHART_HEIGHT);
+    const svg = container.append("svg")
+        .attr("id", "priceChart")
+        .attr("width", CHART_WIDTH)
+        .attr("height", CHART_HEIGHT);
 
-const width = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right;
-const height = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
+    const width = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right;
+    const height = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
 
-let selectedPrice = 0;
-const prices = data.map(d => parseFloat(d.realSum)).filter(p => !isNaN(p));
-if (selectedApartment !== null) {
-selectedPrice = parseFloat(selectedApartment.realSum);
-}
+    let selectedPrice = 0;
+    const prices = data.map(d => parseFloat(d.realSum)).filter(p => !isNaN(p));
+    if (selectedApartment !== null) {
+        selectedPrice = parseFloat(selectedApartment.realSum);
+    }
 
-const minPrice = d3.min(prices);
-const maxPrice = d3.max(prices);
-const avgPrice = d3.mean(prices);
+    const minPrice = d3.min(prices);
+    const maxPrice = d3.max(prices);
+    const avgPrice = d3.mean(prices);
 
-const chartData = [
-{ category: "Minimalna", value: minPrice },
-{ category: "Prosječna", value: avgPrice },
-{ category: "Maksimalna", value: maxPrice },
-{ category: "Odabrani", value: selectedPrice }
-];
+    const chartData = [
+        { category: "Minimalna", value: minPrice },
+        { category: "Prosječna", value: avgPrice },
+        { category: "Maksimalna", value: maxPrice },
+        { category: "Odabrani", value: selectedPrice }
+    ];
 
-const x = d3.scaleBand()
-.domain(chartData.map(d => d.category))
-.range([CHART_MARGIN.left, CHART_WIDTH - CHART_MARGIN.right])
-.padding(0.3);
+    const x = d3.scaleBand()
+        .domain(chartData.map(d => d.category))
+        .range([CHART_MARGIN.left, CHART_WIDTH - CHART_MARGIN.right])
+        .padding(0.3);
 
-const y = d3.scaleLinear()
-.domain([0, maxPrice * 1.1])
-.range([CHART_HEIGHT - CHART_MARGIN.bottom, CHART_MARGIN.top]);
+    const y = d3.scaleLinear()
+        .domain([0, maxPrice * 1.1])
+        .range([CHART_HEIGHT - CHART_MARGIN.bottom, CHART_MARGIN.top]);
 
-// y-os
-svg.append("g")
-.attr("class", "axis")
-.attr("transform", `translate(${CHART_MARGIN.left}, 0)`)
-.call(d3.axisLeft(y))
-.selectAll("text")
-.style("font-size", "12px")
-.attr("dx", "-10");
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(${CHART_MARGIN.left}, 0)`)
+        .call(d3.axisLeft(y))
+        .selectAll("text")
+        .style("font-size", "12px")
+        .attr("dx", "-10");
 
-// x-os
-svg.append("g")
-.attr("class", "axis")
-.attr("transform", `translate(0, ${CHART_HEIGHT - CHART_MARGIN.bottom})`)
-.call(d3.axisBottom(x))
-.selectAll("text")
-.style("font-size", "12px");
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0, ${CHART_HEIGHT - CHART_MARGIN.bottom})`)
+        .call(d3.axisBottom(x))
+        .selectAll("text")
+        .style("font-size", "12px");
 
-// barovi
-svg.selectAll(".bar")
-.data(chartData)
-.enter()
-.append("rect")
-.attr("class", "bar")
-.attr("x", d => x(d.category))
-.attr("y", d => y(d.value))
-.attr("width", x.bandwidth())
-.attr("height", d => CHART_HEIGHT - CHART_MARGIN.bottom - y(d.value))
-.attr("fill", d => d.category === "Odabrani" ? "orange" : "steelblue");
+    svg.selectAll(".bar")
+        .data(chartData)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", d => x(d.category))
+        .attr("y", y(0))
+        .attr("width", x.bandwidth())
+        .attr("height", 0)
+        .attr("fill", d => d.category === "Odabrani" ? "orange" : "steelblue")
+        .transition()
+        .duration(800)
+        .attr("y", d => y(d.value))
+        .attr("height", d => CHART_HEIGHT - CHART_MARGIN.bottom - y(d.value));
 
-// labelice
-svg.selectAll(".label")
-.data(chartData)
-.enter()
-.append("text")
-.attr("class", "label")
-.attr("x", d => x(d.category) + x.bandwidth() / 2)
-.attr("y", d => y(d.value) - 5)
-.attr("text-anchor", "middle")
-.style("font-size", "12px")
-.text(d => d.value.toFixed(0) + " €");
+    svg.selectAll(".label")
+        .data(chartData)
+        .enter()
+        .append("text")
+        .attr("class", "label")
+        .attr("x", d => x(d.category) + x.bandwidth() / 2)
+        .attr("y", d => y(d.value) - 5)
+        .attr("text-anchor", "middle")
+        .style("font-size", "12px")
+        .text(d => d.value.toFixed(0) + " €");
 }
 function applyFilter (e){
 
@@ -302,142 +302,145 @@ applyFilter(e);
 }
 
 function drawRegionComparisonChart(regionWeekdays, regionWeekends) {
-d3.select("#region-chart-container").remove();
+    d3.select("#region-chart-container").remove();
 
-const container = d3.select("#graph-body")
-.append("div")
-.attr("id", "region-chart-container")
-.style("margin-bottom", "40px");
+    const container = d3.select("#graph-body")
+        .append("div")
+        .attr("id", "region-chart-container")
+        .style("margin-bottom", "40px");
 
-container.append("h4").text("Usporedba regije: radni dani vs. vikendi");
+    container.append("h4").text("Usporedba regije: radni dani vs. vikendi");
 
-const svg = container.append("svg")
-.attr("id", "regionChart")
-.attr("width", CHART_WIDTH)
-.attr("height", CHART_HEIGHT);
+    const svg = container.append("svg")
+        .attr("id", "regionChart")
+        .attr("width", CHART_WIDTH)
+        .attr("height", CHART_HEIGHT);
 
-const width = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right;
-const height = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
+    const width = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right;
+    const height = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
 
-const allPrices = [...regionWeekdays, ...regionWeekends]
-.map(d => parseFloat(d.realSum))
-.filter(p => !isNaN(p));
+    const allPrices = [...regionWeekdays, ...regionWeekends]
+        .map(d => parseFloat(d.realSum))
+        .filter(p => !isNaN(p));
 
-if (allPrices.length === 0) return;
+    if (allPrices.length === 0) return;
 
-const chartData = [
-{
-    category: "Minimalna",
-    week: d3.min(regionWeekdays, d => parseFloat(d.realSum)) || 0,
-    weekend: d3.min(regionWeekends, d => parseFloat(d.realSum)) || 0
-},
-{
-    category: "Prosječna",
-    week: d3.mean(regionWeekdays, d => parseFloat(d.realSum)) || 0,
-    weekend: d3.mean(regionWeekends, d => parseFloat(d.realSum)) || 0
-},
-{
-    category: "Maksimalna",
-    week: d3.max(regionWeekdays, d => parseFloat(d.realSum)) || 0,
-    weekend: d3.max(regionWeekends, d => parseFloat(d.realSum)) || 0
-}
-];
+    const chartData = [
+        {
+            category: "Minimalna",
+            week: d3.min(regionWeekdays, d => parseFloat(d.realSum)) || 0,
+            weekend: d3.min(regionWeekends, d => parseFloat(d.realSum)) || 0
+        },
+        {
+            category: "Prosječna",
+            week: d3.mean(regionWeekdays, d => parseFloat(d.realSum)) || 0,
+            weekend: d3.mean(regionWeekends, d => parseFloat(d.realSum)) || 0
+        },
+        {
+            category: "Maksimalna",
+            week: d3.max(regionWeekdays, d => parseFloat(d.realSum)) || 0,
+            weekend: d3.max(regionWeekends, d => parseFloat(d.realSum)) || 0
+        }
+    ];
 
-const x0 = d3.scaleBand()
-.domain(chartData.map(d => d.category))
-.range([CHART_MARGIN.left, CHART_WIDTH - CHART_MARGIN.right])
-.padding(0.3);
+    const x0 = d3.scaleBand()
+        .domain(chartData.map(d => d.category))
+        .range([CHART_MARGIN.left, CHART_WIDTH - CHART_MARGIN.right])
+        .padding(0.3);
 
-const x1 = d3.scaleBand()
-.domain(["week", "weekend"])
-.range([0, x0.bandwidth()])
-.padding(0.1);
+    const x1 = d3.scaleBand()
+        .domain(["week", "weekend"])
+        .range([0, x0.bandwidth()])
+        .padding(0.1);
 
-const maxY = d3.max(chartData.flatMap(d => [d.week, d.weekend]));
-const y = d3.scaleLinear()
-.domain([0, maxY * 1.1])
-.range([CHART_HEIGHT - CHART_MARGIN.bottom, CHART_MARGIN.top]);
+    const maxY = d3.max(chartData.flatMap(d => [d.week, d.weekend]));
+    const y = d3.scaleLinear()
+        .domain([0, maxY * 1.1])
+        .range([CHART_HEIGHT - CHART_MARGIN.bottom, CHART_MARGIN.top]);
 
-const color = {
-week: "orange",
-weekend: "green"
-};
+    const color = {
+        week: "orange",
+        weekend: "green"
+    };
 
-// y-os
-svg.append("g")
-.attr("class", "axis")
-.attr("transform", `translate(${CHART_MARGIN.left}, 0)`)
-.call(d3.axisLeft(y))
-.selectAll("text")
-.style("font-size", "12px")
-.attr("dx", "-10");
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(${CHART_MARGIN.left}, 0)`)
+        .call(d3.axisLeft(y))
+        .selectAll("text")
+        .style("font-size", "12px")
+        .attr("dx", "-10");
 
-// x-os
-svg.append("g")
-.attr("class", "axis")
-.attr("transform", `translate(0, ${CHART_HEIGHT - CHART_MARGIN.bottom})`)
-.call(d3.axisBottom(x0))
-.selectAll("text")
-.style("font-size", "12px");
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0, ${CHART_HEIGHT - CHART_MARGIN.bottom})`)
+        .call(d3.axisBottom(x0))
+        .selectAll("text")
+        .style("font-size", "12px");
 
-const barGroups = svg.append("g");
+    const barGroups = svg.append("g");
 
-const categoryGroups = barGroups.selectAll("g")
-.data(chartData)
-.enter()
-.append("g")
-.attr("transform", d => `translate(${x0(d.category)},0)`);
+    const categoryGroups = barGroups.selectAll("g")
+        .data(chartData)
+        .enter()
+        .append("g")
+        .attr("transform", d => `translate(${x0(d.category)},0)`);
 
-categoryGroups.selectAll("rect")
-.data(d => [
-    { key: "week", value: d.week },
-    { key: "weekend", value: d.weekend }
-])
-.enter()
-.append("rect")
-.attr("x", d => x1(d.key))
-.attr("y", d => y(d.value))
-.attr("width", x1.bandwidth())
-.attr("height", d => CHART_HEIGHT - CHART_MARGIN.bottom - y(d.value))
-.attr("fill", d => color[d.key]);
+    categoryGroups.selectAll("rect")
+        .data(d => [
+            { key: "week", value: d.week },
+            { key: "weekend", value: d.weekend }
+        ])
+        .enter()
+        .append("rect")
+        .attr("x", d => x1(d.key))
+        .attr("y", y(0))
+        .attr("width", x1.bandwidth())
+        .attr("height", 0)
+        .attr("fill", d => color[d.key])
+        .transition()
+        .duration(800)
+        .attr("y", d => y(d.value))
+        .attr("height", d => CHART_HEIGHT - CHART_MARGIN.bottom - y(d.value));
 
-categoryGroups.selectAll("text")
-.data(d => [
-    { key: "week", value: d.week },
-    { key: "weekend", value: d.weekend }
-])
-.enter()
-.append("text")
-.attr("x", d => x1(d.key) + x1.bandwidth() / 2)
-.attr("y", d => y(d.value) - 5)
-.attr("text-anchor", "middle")
-.text(d => d.value.toFixed(0) + " €")
-.style("font-size", "12px");
-const legend = svg.append("g")
-    .attr("class", "legend")
-    .attr("transform", `translate(100, ${CHART_MARGIN.top})`);
+    categoryGroups.selectAll("text")
+        .data(d => [
+            { key: "week", value: d.week },
+            { key: "weekend", value: d.weekend }
+        ])
+        .enter()
+        .append("text")
+        .attr("x", d => x1(d.key) + x1.bandwidth() / 2)
+        .attr("y", d => y(d.value) - 5)
+        .attr("text-anchor", "middle")
+        .text(d => d.value.toFixed(0) + " €")
+        .style("font-size", "12px");
 
-const legendItems = [
-  { label: "Radni dani", color: "orange" },
-  { label: "Vikendi", color: "green" }
-];
+    const legend = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", `translate(100, ${CHART_MARGIN.top})`);
 
-legendItems.forEach((item, i) => {
-  const legendRow = legend.append("g")
-    .attr("transform", `translate(0, ${i * 20})`);
+    const legendItems = [
+        { label: "Radni dani", color: "orange" },
+        { label: "Vikendi", color: "green" }
+    ];
 
-  legendRow.append("rect")
-    .attr("width", 12)
-    .attr("height", 12)
-    .attr("fill", item.color);
+    legendItems.forEach((item, i) => {
+        const legendRow = legend.append("g")
+            .attr("transform", `translate(0, ${i * 20})`);
 
-  legendRow.append("text")
-    .attr("x", 40)
-    .attr("y", 10)
-    .text(item.label)
-    .style("font-size", "12px")
-    .attr("alignment-baseline", "middle");
-});
+        legendRow.append("rect")
+            .attr("width", 12)
+            .attr("height", 12)
+            .attr("fill", item.color);
+
+        legendRow.append("text")
+            .attr("x", 40)
+            .attr("y", 10)
+            .text(item.label)
+            .style("font-size", "12px")
+            .attr("alignment-baseline", "middle");
+    });
 }
 function RegionPriceChart(selectedRegion){
 regionFlag=true
@@ -516,6 +519,8 @@ g.selectAll("text")
 .text((d) => d.properties.name || "")
 .style("font-size", "15 px");
 });
+
+
 
 d3.csv("paris_weekends.csv").then((data) => {
 weekends=data
@@ -760,7 +765,6 @@ legend.append("text")
     .style("font-size", "12px")
     .attr("alignment-baseline", "middle");
 
-// Policijske postaje
 legend.append("rect")
     .attr("x", -5)
     .attr("y", 75)
@@ -778,7 +782,6 @@ legend.append("text")
     .style("font-size", "12px")
     .attr("alignment-baseline", "middle");
 
-// Regije
 legend.append("rect")
     .attr("x", -5)
     .attr("y", 95)
