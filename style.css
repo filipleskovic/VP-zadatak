@@ -123,13 +123,12 @@ transition: opacity 0.2s;
   flex-direction: row;
   gap: 20px;
   align-items: center;
-  justify-content: center; /* opcionalno za centriranje */
-  flex-wrap: wrap; /* da ne ispadnu iz okvira */
+  justify-content: center; 
+  flex-wrap: wrap; 
 }
-
 @media (max-width: 768px) {
   #graph-body {
     flex-direction: column !important;
-    align-items: center!important; /* centriraj kada je column */
+    align-items: center!important;
   }
 }
